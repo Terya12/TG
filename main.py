@@ -12,9 +12,10 @@ from aiogram.types import Message
 from keyboards.inline_kb import *
 from keyboards.reply_kb import *
 from db.db_utils import *
+from config import settings
 
 
-TOKEN = getenv("BOT_TOKEN")
+TOKEN = settings.token
 
 dp = Dispatcher()
 
