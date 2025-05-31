@@ -1,12 +1,9 @@
 from aiogram import F, Router
 from aiogram.types import Message
 
+from keyboards.reply_kb import generate_main_menu
+
 router = Router(name=__name__)
-
-
-@router.message(F.text)
-async def text_handler(message: Message) -> None:
-    await message.answer(text="Не понимаю. Пожалуйста выберите один из вариантов")
 
 
 @router.message(F.photo)
@@ -14,3 +11,8 @@ async def photo_handler(message: Message) -> None:
     await message.answer(
         text="Я не вижу картинок. Пожалуйста выберите один из вариантов"
     )
+
+
+@router.message(F.text == "Вернуться в главное меню")
+async def back_to_menu(message: Message) -> None:
+    await message.answer(text="Главное меню", reply_markup=generate_main_menu())

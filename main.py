@@ -14,8 +14,8 @@ TOKEN = settings.token
 dp = Dispatcher()
 
 dp.include_routers(
-    handlers_router,
     filters_router,
+    handlers_router,
 )
 
 

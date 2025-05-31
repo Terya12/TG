@@ -8,7 +8,7 @@ from db.db_utils import (
     db_update_user,
     db_create_user_cart,
 )
-from keyboards.reply_kb import share_phone_button
+from keyboards.reply_kb import share_phone_button, generate_main_menu
 
 router = Router(name=__name__)
 
@@ -35,8 +35,10 @@ async def start_register_user(message: Message) -> None:
         user = db_get_user_by_telegram(chat_id)  # обновляем после регистрации
 
     if user.phone:
-        await message.answer("Приветствуем в нашем магазине вкусной еды! 🥙")
-        # TODO: показать меню
+        await message.answer(
+            "Приветствуем в нашем магазине вкусной еды! 🥙",
+            reply_markup=generate_main_menu(),
+        )
     else:
         await message.answer(
             text="Для связи с Вами нам нужен Ваш контактный номер ☎️",
@@ -51,5 +53,12 @@ async def contact_handler(message: Message) -> None:
     phone = message.contact.phone_number
     db_update_user(chat_id, phone)
     if db_create_user_cart(chat_id):
-        await message.answer(text="Регистрация прошла успешно")
-        # TODO Показать меню
+        await message.answer(
+            text="Регистрация прошла успешно",
+            reply_markup=generate_main_menu(),
+        )
+
+
+async def show_main_menu(message: Message) -> None:
+    # Сделать заказ, История, Корзинка, Настройки
+    await message.answer(text="Выберите вариант", reply_markup=generate_main_menu())

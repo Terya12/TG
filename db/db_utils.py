@@ -51,3 +51,9 @@ def db_create_user_cart(chat_id: int):
 
 def db_get_user_by_telegram(chat_id) -> Users | None:
     return db_session.scalar(select(Users).where(Users.telegram == chat_id))
+
+
+def db_get_all_category() -> Iterable[Categories]:
+    # Получаем все категории
+    query = select(Categories)
+    return db_session.scalars(query).all()
