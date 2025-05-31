@@ -56,7 +56,10 @@ class Cart(Base):
     )
     total_product: Mapped[int] = mapped_column(default=0)
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
         unique=True,
     )
 
@@ -82,7 +85,10 @@ class Finally_carts(Base):
     quantity: Mapped[int]
 
     card_id: Mapped[int] = mapped_column(
-        ForeignKey("carts.id"),
+        ForeignKey(
+            "carts.id",
+            ondelete="CASCADE",
+        ),
         unique=True,
     )
     user_carts: Mapped[Cart] = relationship(back_populates="finally_id")
@@ -122,14 +128,20 @@ class Products(Base):
     description: Mapped[str] = mapped_column(nullable=True)
     image: Mapped[str] = mapped_column(String(100))
     price: Mapped[int] = mapped_column(DECIMAL(12, 2), default=0)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
+    category_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "categories.id",
+            ondelete="CASCADE",
+        ),
+    )
     product_category: Mapped["Categories"] = relationship(
         "Categories", back_populates="products"
     )
 
 
 def main():
-    Base.metadata.create_all(engine)
+    # Base.metadata.drop_all(engine)
+    # Base.metadata.create_all(engine)
     categories = ("Лаваши", "Донары", "Хот-доги", "Десерты", "Соусы")
     products = (
         (1, "Мини Лаваш", 100, "Мясо, тесто, помидоры", "media/lavash/lavash_1.jpg"),
