@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-from db.db_utils import db_get_all_category, db_get_product_by_id
+from db.db_utils import db_get_all_category, db_get_products
 
 
 def generate_category_menu() -> InlineKeyboardMarkup:
@@ -24,7 +24,7 @@ def generate_category_menu() -> InlineKeyboardMarkup:
 
 def show_product_by_category(category_id: int) -> InlineKeyboardMarkup:
     # Кнопки продуктов
-    products = db_get_product_by_id(category_id)
+    products = db_get_products(category_id)
     builder = InlineKeyboardBuilder()
     for product in products:
         builder.button(
