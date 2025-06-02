@@ -11,8 +11,3 @@ async def photo_handler(message: Message) -> None:
     await message.answer(
         text="Я не вижу картинок. Пожалуйста выберите один из вариантов"
     )
-
-
-@router.message(F.text == "Вернуться в главное меню")
-async def back_to_menu(message: Message) -> None:
-    await message.answer(text="Главное меню", reply_markup=generate_main_menu())

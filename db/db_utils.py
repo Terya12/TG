@@ -57,3 +57,9 @@ def db_get_all_category() -> Iterable[Categories]:
     # Получаем все категории
     query = select(Categories)
     return db_session.scalars(query).all()
+
+
+def db_get_product_by_id(category_id) -> Iterable[Products] | None:
+    # Получаем все продукты
+    query = select(Products).where(Products.category_id == category_id)
+    return db_session.scalars(query).all()
