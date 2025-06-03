@@ -72,7 +72,7 @@ def db_get_product_by_id(product_id: int) -> Products | None:
 
 def db_get_user_cart(chat_id: int) -> Cart | None:
     # Получение корзины
-    query = select(Cart.id).join(Users).where(Users.telegram == chat_id)
+    query = select(Cart).join(Users).where(Users.telegram == chat_id)
     return db_session.scalar(query)
 
 
@@ -89,3 +89,8 @@ def db_update_to_cart(price: DECIMAL, cart_id: int, quantity=1) -> None:
     db_session.execute(query)
     db_session.commit()
     return None
+
+
+def db_get_product_by_name(product_name) -> Products | None:
+    query = select(Products).where(Products.product_name == product_name)
+    return db_session.scalar(query)

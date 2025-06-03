@@ -39,3 +39,24 @@ def show_product_by_category(category_id: int) -> InlineKeyboardMarkup:
         )
     )
     return builder.as_markup()
+
+
+def add_to_cart(quantity=1) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="➖", callback_data="action-")
+    builder.button(text=str(quantity), callback_data="quantity")
+    builder.button(text="➕", callback_data="action+")
+    builder.row(
+        InlineKeyboardButton(
+            text="🛒 Добавить в корзину",
+            callback_data="add_to_cart",
+        )
+    )
+    builder.row(
+        InlineKeyboardButton(
+            text="👈 Назад",
+            callback_data="back_to_products",
+        )
+    )
+
+    return builder.as_markup()
