@@ -90,7 +90,7 @@ async def constructor_change(call: CallbackQuery):
     product = db_get_product_by_name(product_name)
 
     if not product or not user_cart:
-        await call.answer("Ошибка: товар не найден", show_alert=True)
+        await call.answer("Ошибка: товар не найден", show_alert=False)
         return
 
     action = call.data  # "action+" или "action-"
@@ -101,12 +101,12 @@ async def constructor_change(call: CallbackQuery):
         message_text = "✅ Продукт добавлен"
     elif action == "action-":
         if quantity <= 1:
-            await call.answer("Меньше одного нельзя", show_alert=True)
+            await call.answer("Меньше одного нельзя", show_alert=False)
             return
         quantity -= 1
         message_text = "🗑️ Продукт удалён"
     else:
-        await call.answer("Неизвестное действие", show_alert=True)
+        await call.answer("Неизвестное действие", show_alert=False)
         return
 
     # Обновление корзины
