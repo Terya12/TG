@@ -1,5 +1,6 @@
 from typing import Iterable
 
+import db
 from sqlalchemy.orm.session import Session
 from sqlalchemy import update, delete, select, DECIMAL
 from sqlalchemy.sql.functions import sum
@@ -94,3 +95,36 @@ def db_update_to_cart(price: DECIMAL, cart_id: int, quantity=1) -> None:
 def db_get_product_by_name(product_name) -> Products | None:
     query = select(Products).where(Products.product_name == product_name)
     return db_session.scalar(query)
+
+
+def db_insert_or_upd_finally_cart(
+    cart_id,
+    product_name,
+    total_products,
+    total_price,
+) -> bool:
+    # Постоянная корзина
+    try:
+        query = Finally_carts(
+            card_id=cart_id,
+            product_name=product_name,
+            quantity=total_products,
+            finally_price=total_price,
+        )
+        db_session.add(query)
+        db_session.commit()
+        return True
+    except IntegrityError:
+        db_session.rollback()
+        query = (
+            update(Finally_carts)
+            .where(Finally_carts.product_name == product_name)
+            .where(Finally_carts.card_id == cart_id)
+            .values(
+                quantity=total_products,
+                finally_price=total_price,
+            )
+        )
+        db_session.execute(query)
+        db_session.commit()
+        return False
