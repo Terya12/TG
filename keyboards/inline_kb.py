@@ -49,7 +49,7 @@ def add_to_cart(quantity=1) -> InlineKeyboardMarkup:
     builder.row(
         InlineKeyboardButton(
             text="🛒 Добавить в корзину",
-            callback_data="add_to_cart",
+            callback_data="put_into_cart",
         )
     )
     builder.row(
