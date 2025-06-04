@@ -10,8 +10,8 @@ from db.db_utils import (
     db_insert_or_upd_finally_cart,
 )
 from handlers.users import show_main_menu
-from keyboards.inline_kb import add_to_cart
-from utils.caption import text_for_caption
+from keyboards.inline_kb import add_to_cart, generate_category_menu
+from utils.caption import text_for_caption, basket_text
 
 router = Router(name=__name__)
 
@@ -75,7 +75,7 @@ async def constructor_change(call: CallbackQuery):
 async def quantity(call: CallbackQuery):
     user_cart = db_get_user_cart(call.message.chat.id)
     quantity = user_cart.total_product
-    await call.answer(f"У вас в корзине {quantity} товаров", show_alert=False)
+    await call.answer(f"{quantity}", show_alert=False)
 
 
 @router.callback_query(F.data == "put_into_cart")
@@ -92,7 +92,24 @@ async def put_into_cart(call: CallbackQuery):
         total_products=cart.total_product,
         total_price=cart.total_price,
     ):
-        await call.message.answer("✅ Продукт добавлен в корзину")
+        await call.message.answer(
+            "✅ Продукт добавлен в корзину",
+            reply_markup=generate_category_menu(call.message.chat.id),
+        )
     else:
-        await call.message.answer("📝 Количество успешно обновлено")
-    await show_main_menu(call.message)
+        await call.message.answer(
+            "📝 Количество успешно обновлено",
+            reply_markup=generate_category_menu(call.message.chat.id),
+        )
+
+
+@router.callback_query(F.data == "your_basket")
+async def show_basket(call: CallbackQuery):
+    """Показ корзины"""
+    chat_id = call.message.chat.id
+    context = basket_text(chat_id, "Ваша корзина")
+    if context:
+        count, text, *_ = context
+        await call.message.answer(text=text)
+    else:
+        await call.message.answer(text="Ваша корзина пуста")

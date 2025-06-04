@@ -36,7 +36,7 @@ async def show_product_button(call: CallbackQuery):
 async def back_to_categories(call: CallbackQuery):
     await call.message.edit_text(
         text="Выберите продукт",
-        reply_markup=generate_category_menu(),
+        reply_markup=generate_category_menu(call.message.chat.id),
     )
 
 
@@ -74,5 +74,5 @@ async def back_to_products(call: CallbackQuery):
     await call.message.delete()
     await call.message.answer(
         text="Выберите продукт",
-        reply_markup=generate_category_menu(),
+        reply_markup=generate_category_menu(call.message.chat.id),
     )

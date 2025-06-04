@@ -12,14 +12,14 @@ router = Router(name=__name__)
 async def make_order(message: Message) -> None:
     # Реакция на кнопку сделать заказ
     chat_id = message.chat.id
-    # TODO Получить id корзины пользователя
+
     await message.answer(
         text="Давайте начнем",
         reply_markup=back_to_main_menu(),
     )
     await message.answer(
         text="Выберите категорию",
-        reply_markup=generate_category_menu(),
+        reply_markup=generate_category_menu(chat_id),
     )
 
 

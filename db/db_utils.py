@@ -1,9 +1,10 @@
+from decimal import Decimal
 from typing import Iterable
 
 import db
 from sqlalchemy.orm.session import Session
 from sqlalchemy import update, delete, select, DECIMAL
-from sqlalchemy.sql.functions import sum
+from sqlalchemy.sql.functions import func
 from sqlalchemy.exc import IntegrityError
 
 
@@ -128,3 +129,32 @@ def db_insert_or_upd_finally_cart(
         db_session.execute(query)
         db_session.commit()
         return False
+
+
+def db_get_total_price(chat_id: int) -> DECIMAL:
+    # Получение общей суммы пользователя из корзины
+    query = (
+        select(func.sum(Finally_carts.finally_price))
+        .join(Finally_carts.user_carts)
+        .join(Cart.user_cart)
+        .where(Users.telegram == chat_id)
+    )
+    result = db_session.scalar(query)
+    return result or Decimal(0)
+
+
+def db_get_cart_products(chat_id: int) -> Iterable | None:
+    query = (
+        select(
+            Finally_carts.product_name,
+            Finally_carts.quantity,
+            Finally_carts.finally_price,
+            Finally_carts.card_id,
+        )
+        .join(Finally_carts.user_carts)
+        .join(Cart.user_cart)
+        .where(Users.telegram == chat_id)
+    )
+
+    result = db_session.execute(query).all()
+    return result

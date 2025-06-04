@@ -3,16 +3,22 @@ from aiogram.utils.keyboard import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-from db.db_utils import db_get_all_category, db_get_products
+
+from db.db_utils import (
+    db_get_all_category,
+    db_get_products,
+    db_get_total_price,
+)
 
 
-def generate_category_menu() -> InlineKeyboardMarkup:
+def generate_category_menu(chat_id: int) -> InlineKeyboardMarkup:
     # Кнопки категорий
     categories = db_get_all_category()
     builder = InlineKeyboardBuilder()
-    # TODO Общая сумма корзины
+    total_price = db_get_total_price(chat_id)
+    text = f"Ваша корзина на сумму {total_price if total_price else 0} грн."
 
-    builder.button(text=f"Ваша корзина (TODO сум)", callback_data="Ваша корзина")
+    builder.button(text=text, callback_data="your_basket")
     for category in categories:
         builder.button(
             text=category.category_name, callback_data=f"category_{category.id}"
