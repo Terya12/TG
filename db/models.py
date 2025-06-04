@@ -58,9 +58,7 @@ class Finally_carts(Base):
     product_name: Mapped[str] = mapped_column(String(50))
     finally_price: Mapped[DECIMAL] = mapped_column(DECIMAL(12, 2), default=0)
     quantity: Mapped[int]
-    card_id: Mapped[int] = mapped_column(
-        ForeignKey("carts.id", ondelete="CASCADE"), unique=True
-    )
+    card_id: Mapped[int] = mapped_column(ForeignKey("carts.id", ondelete="CASCADE"))
 
     user_carts: Mapped[Cart] = relationship(back_populates="finally_id")
 
