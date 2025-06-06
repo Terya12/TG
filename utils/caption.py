@@ -13,7 +13,7 @@ def text_for_caption(name, desc, price):
 def basket_text(chat_id, user_text):
     products = db_get_cart_products(chat_id)
     if products:
-        text = f"<b>{user_text}</b>\n\n"
+        text = f"{user_text}\n\n"
         total_products = total_price = count = 0
         for name, quantity, price, cart_id in products:
             count += 1
@@ -22,8 +22,8 @@ def basket_text(chat_id, user_text):
             text += f"{count}. {name}\n Количество: {quantity}\n Стоимость: {price}\n\n"
 
         text += (
-            f"<b>Общее кол-во продуктов: </b> {total_products}\n"
-            f"<b>Общая стоимость: </b>: {total_price}\n"
+            f"Общее кол-во продуктов: {total_products}\n"
+            f"Общая стоимость: {total_price}\n"
         )
         context = (count, text, total_price, cart_id)
         return context
