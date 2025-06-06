@@ -8,9 +8,14 @@ from db.db_utils import (
     db_get_product_by_name,
     db_update_to_cart,
     db_insert_or_upd_finally_cart,
+    db_delete_product_by_id,
 )
 from handlers.users import show_main_menu
-from keyboards.inline_kb import add_to_cart, generate_category_menu
+from keyboards.inline_kb import (
+    add_to_cart,
+    generate_category_menu,
+    generate_basket_button,
+)
 from utils.caption import text_for_caption, basket_text
 
 router = Router(name=__name__)
@@ -107,9 +112,26 @@ async def put_into_cart(call: CallbackQuery):
 async def show_basket(call: CallbackQuery):
     """Показ корзины"""
     chat_id = call.message.chat.id
-    context = basket_text(chat_id, "Ваша корзина")
+    context = basket_text(chat_id, " 🧺 Ваша корзина")
+    await call.message.delete()
     if context:
         count, text, *_ = context
-        await call.message.answer(text=text)
+        await call.message.answer(
+            text=text,
+            reply_markup=generate_basket_button(chat_id),
+        )
     else:
-        await call.message.answer(text="Ваша корзина пуста")
+        await call.message.answer(
+            text="Ваша корзина пуста 😔",
+            reply_markup=generate_category_menu(chat_id),
+        )
+
+
+@router.callback_query(F.data.startswith("delete_"))
+async def delete_cart_product(call: CallbackQuery):
+    finally_id = int(call.data.split("_")[1])
+    db_delete_product_by_id(finally_id)
+    chat_id = call.message.chat.id
+
+    await call.answer("🗑️ Продукт удалён")
+    await show_basket(call)
