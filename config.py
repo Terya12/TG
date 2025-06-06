@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     db_address: str
     db_name: str
     token: str
+    payment: str
 
     @property
     def db_url(self) -> str:
