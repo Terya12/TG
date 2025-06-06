@@ -158,3 +158,24 @@ def db_get_cart_products(chat_id: int) -> Iterable | None:
 
     result = db_session.execute(query).all()
     return result
+
+
+def db_get_product_for_delete(chat_id: int) -> Iterable | None:
+    query = (
+        select(
+            Finally_carts.id,
+            Finally_carts.product_name,
+        )
+        .join(Finally_carts.user_carts)
+        .join(Cart.user_cart)
+        .where(Users.telegram == chat_id)
+    )
+    result = db_session.execute(query).all()
+    return result
+
+
+def db_delete_product_by_id(finally_id: int) -> None:
+    query = delete(Finally_carts).where(Finally_carts.id == finally_id)
+    db_session.execute(query)
+    db_session.commit()
+    return None
