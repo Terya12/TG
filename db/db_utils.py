@@ -203,9 +203,6 @@ def db_clear_basket(cart_id: int) -> None:
     db_session.commit()
 
 
-
-
-
 def db_save_order(
     user_id: int,
     total_price: float,
