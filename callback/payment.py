@@ -4,7 +4,7 @@ from aiogram.types import CallbackQuery, LabeledPrice
 from aiogram.types import Message, SuccessfulPayment, PreCheckoutQuery
 
 from config import settings
-from db.db_utils import db_get_phone_number_by_tg_id, db_clear_basket
+from db.db_utils import db_get_user_by_tg_id, db_clear_basket, db_save_order
 from utils.caption import basket_text
 
 router = Router()
@@ -56,12 +56,13 @@ async def process_successful_payment(message: Message, bot: Bot):
         order_id = parts[1]
         user_id = parts[2]
         # Здесь обновляем статус заказа в базе, уведомляем пользователя и т.п.
-    user = db_get_phone_number_by_tg_id(user_id)
+    user = db_get_user_by_tg_id(user_id)
     count, text, total_price, cart_id = basket_text(
         message.chat.id,
         f"Заказ №{order_id}",
     )
 
+    db_save_order(user.id, total_price, cart_id)
     await bot.send_message(
         chat_id=settings.work_group,
         text=f"✅ Получен новый заказ!\nПользователь: {user.name}\nТелефон: {user.phone}\n"
