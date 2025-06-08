@@ -17,7 +17,7 @@ def generate_category_menu(chat_id: int) -> InlineKeyboardMarkup:
     categories = db_get_all_category()
     builder = InlineKeyboardBuilder()
     total_price = db_get_total_price(chat_id)
-    text = f"Ваша корзина на сумму {total_price if total_price else 0} грн."
+    text = f"🛒 Ваша корзина на сумму {total_price if total_price else 0} грн."
 
     builder.button(text=text, callback_data="your_basket")
     for category in categories:
