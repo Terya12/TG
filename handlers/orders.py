@@ -1,10 +1,10 @@
 from aiogram import Router, F
 from aiogram.types import Message
 
-
+from db.db_utils import db_get_orders_with_items_by_telegram
 from keyboards.inline_kb import generate_category_menu, generate_basket_button
 from keyboards.reply_kb import back_to_main_menu, generate_main_menu
-from utils.caption import basket_text
+from utils.caption import basket_text, format_order_history_text
 
 router = Router(name=__name__)
 
@@ -44,3 +44,11 @@ async def basket_show(message: Message) -> None:
             text="Ваша корзина пуста",
             reply_markup=generate_category_menu(chat_id),
         )
+
+
+@router.message(F.text == "📖 История заказов")
+async def order_history_handler(message: Message) -> None:
+    orders = db_get_orders_with_items_by_telegram(message.from_user.id)
+    text = format_order_history_text(orders)
+
+    await message.answer(text=text)
