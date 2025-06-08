@@ -1,3 +1,6 @@
+from typing import List
+
+from db import Order
 from db.db_utils import db_get_cart_products
 
 
@@ -28,3 +31,23 @@ def basket_text(chat_id, user_text):
         context = (count, text, total_price, cart_id)
         return context
     return None
+
+
+def format_order_history_text(orders: List[Order]) -> str:
+    if not orders:
+        return "У вас пока нет заказов."
+
+    lines = ["📜 История заказов:\n"]
+    for order in orders:
+        lines.append(
+            f"<b>Заказ №</b>{order.id} | Дата: {order.created_at.strftime('%Y-%m-%d %H:%M')}"
+        )
+        lines.append(f"Итого: {order.total_price} грн.")
+        lines.append("Товары:")
+        for item in order.items:
+            lines.append(
+                f"  - {item.product_name} x{item.quantity} по {item.price} грн."
+            )
+        lines.append("")  # пустая строка между заказами
+
+    return "\n".join(lines)
