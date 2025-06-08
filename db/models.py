@@ -8,6 +8,9 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
 )
+from sqlalchemy import DateTime, Enum
+from datetime import datetime
+import enum
 
 from config import settings
 
@@ -97,3 +100,36 @@ class Products(Base):
     product_category: Mapped["Categories"] = relationship(
         "Categories", back_populates="products"
     )
+
+
+class OrderStatusEnum(enum.Enum):
+    pending = "pending"
+    paid = "paid"
+    cancelled = "cancelled"
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    total_price: Mapped[DECIMAL] = mapped_column(DECIMAL(12, 2))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    status: Mapped[OrderStatusEnum] = mapped_column(
+        Enum(OrderStatusEnum), default=OrderStatusEnum.pending
+    )
+
+    user: Mapped[Users] = relationship("Users")
+    items: Mapped[list["OrderItem"]] = relationship("OrderItem", back_populates="order")
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
+    product_name: Mapped[str] = mapped_column(String(50))
+    price: Mapped[DECIMAL] = mapped_column(DECIMAL(12, 2))
+    quantity: Mapped[int]
+
+    order: Mapped[Order] = relationship("Order", back_populates="items")
