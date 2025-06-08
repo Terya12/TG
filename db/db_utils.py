@@ -179,3 +179,14 @@ def db_delete_product_by_id(finally_id: int) -> None:
     db_session.execute(query)
     db_session.commit()
     return None
+
+
+def db_get_phone_number_by_tg_id(chat_id: int) -> Users | None:
+    query = select(Users).where(Users.telegram == chat_id)
+    return db_session.scalar(query)
+
+
+def db_clear_basket(cart_id: int) -> None:
+    query = delete(Finally_carts).where(Finally_carts.id == cart_id)
+    db_session.execute(query)
+    db_session.commit()
