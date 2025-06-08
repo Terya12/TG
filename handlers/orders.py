@@ -32,7 +32,7 @@ async def back_to_menu(message: Message) -> None:
 @router.message(F.text == "🛒 Корзина")
 async def basket_show(message: Message) -> None:
     chat_id = message.chat.id
-    context = basket_text(chat_id, "Ваша корзина")
+    context = basket_text(chat_id, "🛒 Ваша корзина")
     if context:
         count, text, *_ = context
         await message.answer(
