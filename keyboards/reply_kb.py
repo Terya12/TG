@@ -15,7 +15,7 @@ def share_phone_button() -> ReplyKeyboardMarkup:
 def generate_main_menu() -> ReplyKeyboardMarkup:
     builder = ReplyKeyboardBuilder()
     builder.button(text="✅ Сделать заказ")
-    builder.button(text="📖 История")
+    builder.button(text="📖 История заказов")
     builder.button(text="🛒 Корзина")
     builder.button(text="⚙ Настройка")
     builder.adjust(1, 3)
