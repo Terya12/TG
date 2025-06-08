@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     db_name: str
     token: str
     payment: str
+    work_group: str
 
     @property
     def db_url(self) -> str:
