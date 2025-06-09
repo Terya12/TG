@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     token: str
     payment: str
     work_group: str
+    admin: str
+    admin_password: str
+    secret_key: str
 
     @property
     def db_url(self) -> str:
