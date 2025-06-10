@@ -72,12 +72,32 @@ def add_to_cart(quantity=1) -> InlineKeyboardMarkup:
 def generate_basket_button(chat_id: int) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     cart_product = db_get_product_for_delete(chat_id)
-    builder.button(text="🚀 Оформить заказ", callback_data="order_pay")
-    for finally_cart_id, product_name in cart_product:
-        builder.button(
-            text=f"❌Удалить: {product_name}",
-            callback_data=f"delete_{finally_cart_id}",
+    builder.row(
+        InlineKeyboardButton(
+            text="🚀 Оформить заказ",
+            callback_data="order_pay",
+        ),
+    )
+
+    for product_id, product_name, quantity in cart_product:
+        builder.row(
+            InlineKeyboardButton(
+                text="➖",
+                callback_data=f"decrease_{product_id}",
+            ),
+            InlineKeyboardButton(
+                text=f"{product_name}",
+                callback_data="noop",
+            ),
+            InlineKeyboardButton(
+                text="➕",
+                callback_data=f"increase_{product_id}",
+            ),
         )
-    builder.button(text="👈 Назад к покупкам", callback_data="back_to_products")
-    builder.adjust(1)
+    builder.row(
+        InlineKeyboardButton(
+            text="👈 Назад к покупкам",
+            callback_data="back_to_products",
+        ),
+    )
     return builder.as_markup()
