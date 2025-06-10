@@ -165,6 +165,7 @@ def db_get_cart_products(chat_id: int) -> Iterable | None:
         .join(Finally_carts.user_carts)
         .join(Cart.user_cart)
         .where(Users.telegram == chat_id)
+        .order_by(Finally_carts.id)
     )
 
     result = db_session.execute(query).all()
@@ -173,13 +174,11 @@ def db_get_cart_products(chat_id: int) -> Iterable | None:
 
 def db_get_product_for_delete(chat_id: int) -> Iterable | None:
     query = (
-        select(
-            Finally_carts.id,
-            Finally_carts.product_name,
-        )
+        select(Finally_carts.id, Finally_carts.product_name, Finally_carts.quantity)
         .join(Finally_carts.user_carts)
         .join(Cart.user_cart)
         .where(Users.telegram == chat_id)
+        .order_by(Finally_carts.id)
     )
     result = db_session.execute(query).all()
     return result
@@ -251,3 +250,66 @@ def db_get_orders_with_items_by_telegram(telegram_id: int) -> List[Order]:
     orders = result.unique().scalars().all()
 
     return orders
+
+
+def db_increase_product_quantity(chat_id: int, product_id: int):
+    # 1. Получить корзину пользователя (Cart) через Users.telegram == chat_id
+    cart_query = select(Cart).join(Cart.user_cart).where(Users.telegram == chat_id)
+    user_cart = db_session.execute(cart_query).scalar_one_or_none()
+    if not user_cart:
+        return  # Корзина не найдена
+
+    # 2. Получить элемент Finally_carts с этим product_id и cart_id = user_cart.id
+    item_query = select(Finally_carts).where(
+        Finally_carts.id == product_id,
+        Finally_carts.card_id == user_cart.id,
+    )
+    cart_item = db_session.execute(item_query).scalar_one_or_none()
+    if not cart_item:
+        return  # Товар не найден в корзине
+
+    # 3. Получить цену из таблицы products по имени продукта
+    price_query = select(Products.price).where(
+        Products.product_name == cart_item.product_name
+    )
+    price = db_session.execute(price_query).scalar_one_or_none()
+    if price is None:
+        return  # Цена не найдена
+    if cart_item:
+        cart_item.quantity += 1
+        cart_item.finally_price = cart_item.quantity * price
+        db_session.commit()
+
+
+def db_decrease_product_quantity(chat_id: int, product_id: int):
+    # 1. Получить корзину пользователя (Cart) через Users.telegram == chat_id
+    cart_query = select(Cart).join(Cart.user_cart).where(Users.telegram == chat_id)
+    user_cart = db_session.execute(cart_query).scalar_one_or_none()
+    if not user_cart:
+        return  # Корзина не найдена
+
+    # 2. Получить элемент Finally_carts с этим product_id и cart_id = user_cart.id
+    item_query = select(Finally_carts).where(
+        Finally_carts.id == product_id,
+        Finally_carts.card_id == user_cart.id,
+    )
+    cart_item = db_session.execute(item_query).scalar_one_or_none()
+    if not cart_item:
+        return  # Товар не найден в корзине
+
+    # 3. Получить цену из таблицы products по имени продукта
+    price_query = select(Products.price).where(
+        Products.product_name == cart_item.product_name
+    )
+    price = db_session.execute(price_query).scalar_one_or_none()
+    if price is None:
+        return  # Цена не найдена
+
+    # 4. Изменяем количество и пересчитываем finally_price
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
+        cart_item.finally_price = cart_item.quantity * price
+    else:
+        db_session.delete(cart_item)
+
+    db_session.commit()
