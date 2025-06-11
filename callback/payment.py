@@ -4,7 +4,11 @@ from aiogram.types import CallbackQuery, LabeledPrice
 from aiogram.types import Message, SuccessfulPayment, PreCheckoutQuery
 
 from config import settings
-from db.db_utils import db_get_user_by_tg_id, db_clear_basket, db_save_order
+from db.db_utils import (
+    db_get_user_by_tg_id,
+    db_clear_basket,
+    db_save_order,
+)
 from utils.caption import basket_text
 
 router = Router()
@@ -45,28 +49,47 @@ async def show_detail_payment(call: CallbackQuery):
 @router.message(F.successful_payment)
 async def process_successful_payment(message: Message, bot: Bot):
     payment: SuccessfulPayment = message.successful_payment
-
-    # Можно разобрать payload, чтобы понять, какой заказ оплачен
     payload = payment.invoice_payload
 
-    # Например, разбираем payload
-    # order_12345_67890 -> order id и user id
-    parts = payload.split("_")
-    if len(parts) == 3 and parts[0] == "order":
-        order_id = parts[1]
-        user_id = parts[2]
-        # Здесь обновляем статус заказа в базе, уведомляем пользователя и т.п.
-    user = db_get_user_by_tg_id(user_id)
-    count, text, total_price, cart_id = basket_text(
-        message.chat.id,
-        f"Заказ №{order_id}",
-    )
+    try:
+        # Разбор payload — ожидаем "order_<basket_id>_<user_id>"
+        parts = payload.split("_")
+        if len(parts) != 3 or parts[0] != "order":
+            raise ValueError("Неверный формат payload")
 
-    db_save_order(user.id, total_price, cart_id)
-    await bot.send_message(
-        chat_id=settings.work_group,
-        text=f"✅ Получен новый заказ!\nПользователь: {user.name}\nТелефон: {user.phone}\n"
-        + text,
-    )
-    db_clear_basket(order_id)
-    await message.answer("Спасибо за оплату! Ваш заказ подтверждён.")
+        cart_id = int(parts[1])
+        user_id = int(parts[2])
+
+        user = db_get_user_by_tg_id(user_id)
+        if not user:
+            raise ValueError(f"Пользователь с ID {user_id} не найден")
+
+        # Получаем корзину и считаем итоговую сумму
+        count, text, total_price, cart_id = basket_text(
+            message.chat.id,
+            "",
+        )
+
+        # Сохраняем заказ и получаем order_id
+        order_id = db_save_order(user.id, total_price, cart_id)
+
+        await bot.send_message(
+            chat_id=settings.work_group,
+            text=(
+                f"✅ Получен новый заказ!\n"
+                f"Пользователь: {user.name}\n"
+                f"Телефон: {user.phone}\n"
+                f"Заказ № {order_id}"
+                f"{text}"
+            ),
+        )
+
+        db_clear_basket(cart_id)
+
+        await message.answer("Спасибо за оплату! Ваш заказ подтверждён ✅")
+
+    except Exception as e:
+        print(f"[Ошибка оплаты] {e}")
+        await message.answer(
+            "Произошла ошибка при обработке платежа. Мы уже разбираемся."
+        )
