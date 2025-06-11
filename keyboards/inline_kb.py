@@ -1,3 +1,4 @@
+from aiogram.types import CallbackQuery
 from aiogram.utils.keyboard import (
     InlineKeyboardBuilder,
     InlineKeyboardButton,
@@ -9,7 +10,10 @@ from db.db_utils import (
     db_get_products,
     db_get_total_price,
     db_get_product_for_delete,
+    db_get_orders_with_items_by_telegram,
+    db_get_orders_count_by_telegram,
 )
+from utils.caption import format_order_history_text
 
 
 def generate_category_menu(chat_id: int) -> InlineKeyboardMarkup:
@@ -101,3 +105,41 @@ def generate_basket_button(chat_id: int) -> InlineKeyboardMarkup:
         ),
     )
     return builder.as_markup()
+
+
+ORDERS_PER_PAGE = 3
+
+
+async def send_order_page(message_or_callback, tg_id: int, page: int):
+    offset = (page - 1) * ORDERS_PER_PAGE
+    orders = db_get_orders_with_items_by_telegram(tg_id, ORDERS_PER_PAGE, offset)
+    total_orders = db_get_orders_count_by_telegram(tg_id)
+    total_pages = (total_orders + ORDERS_PER_PAGE - 1) // ORDERS_PER_PAGE
+
+    if not orders:
+        await message_or_callback.answer("У вас пока нет заказов.")
+        return
+
+    text = format_order_history_text(orders)
+
+    buttons = []
+    if page > 1:
+        buttons.append(
+            InlineKeyboardButton(
+                text="⬅️ Назад", callback_data=f"orders_page:{page - 1}"
+            )
+        )
+    if page < total_pages:
+        buttons.append(
+            InlineKeyboardButton(
+                text="Вперёд ➡️", callback_data=f"orders_page:{page + 1}"
+            )
+        )
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[buttons] if buttons else [])
+
+    if isinstance(message_or_callback, CallbackQuery):
+        await message_or_callback.message.edit_text(text=text, reply_markup=keyboard)
+        await message_or_callback.answer()
+    else:
+        await message_or_callback.answer(text=text, reply_markup=keyboard)

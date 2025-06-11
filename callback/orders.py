@@ -11,6 +11,7 @@ from keyboards.inline_kb import (
     show_product_by_category,
     generate_category_menu,
     add_to_cart,
+    send_order_page,
 )
 from keyboards.reply_kb import share_phone_button
 from utils.caption import text_for_caption
@@ -76,3 +77,10 @@ async def back_to_products(call: CallbackQuery):
         text="Выберите продукт",
         reply_markup=generate_category_menu(call.message.chat.id),
     )
+
+
+@router.callback_query(F.data.startswith("orders_page:"))
+async def paginate_orders(callback: CallbackQuery):
+    _, page_str = callback.data.split(":")
+    page = int(page_str)
+    await send_order_page(callback, callback.from_user.id, page)

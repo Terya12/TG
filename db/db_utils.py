@@ -232,24 +232,31 @@ def db_save_order(
     return order_id
 
 
-def db_get_orders_with_items_by_telegram(telegram_id: int) -> List[Order]:
-    """
-    Возвращает список заказов с позициями пользователя по telegram_id.
-    """
-    user = db_session.scalar(select(Users).where(Users.telegram == telegram_id))
+def db_get_orders_with_items_by_telegram(
+    tg_id: int, limit: int, offset: int
+) -> list[Order]:
+    user = db_get_user_by_tg_id(tg_id)
     if not user:
         return []
 
-    result = db_session.execute(
+    query = (
         select(Order)
         .where(Order.user_id == user.id)
-        .options(joinedload(Order.items))
         .order_by(Order.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     )
-    # ВАЖНО: unique() вызывается **сразу** после execute и до scalars
-    orders = result.unique().scalars().all()
 
-    return orders
+    return db_session.scalars(query).all()
+
+
+def db_get_orders_count_by_telegram(tg_id: int) -> int:
+    user = db_get_user_by_tg_id(tg_id)
+    if not user:
+        return 0
+
+    query = select(func.count()).select_from(Order).where(Order.user_id == user.id)
+    return db_session.scalar(query)
 
 
 def db_increase_product_quantity(chat_id: int, product_id: int):
