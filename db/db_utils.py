@@ -68,7 +68,7 @@ def db_get_user_by_telegram(chat_id) -> Users | None:
 
 def db_get_all_category() -> Iterable[Categories]:
     # Получаем все категории
-    query = select(Categories)
+    query = select(Categories).order_by(Categories.id)
     return db_session.scalars(query).all()
 
 
