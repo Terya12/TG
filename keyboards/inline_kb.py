@@ -17,11 +17,11 @@ from utils.caption import format_order_history_text
 
 
 def generate_category_menu(chat_id: int) -> InlineKeyboardMarkup:
-    # Кнопки категорий
+    # Category buttons
     categories = db_get_all_category()
     builder = InlineKeyboardBuilder()
     total_price = db_get_total_price(chat_id)
-    text = f"🛒 Ваша корзина на сумму {total_price if total_price else 0} грн."
+    text = f"🛒 Your cart total: ${total_price if total_price else 0} "
 
     builder.button(text=text, callback_data="your_basket")
     for category in categories:
@@ -34,7 +34,7 @@ def generate_category_menu(chat_id: int) -> InlineKeyboardMarkup:
 
 
 def show_product_by_category(category_id: int) -> InlineKeyboardMarkup:
-    # Кнопки продуктов
+    # Product buttons
     products = db_get_products(category_id)
     builder = InlineKeyboardBuilder()
     for product in products:
@@ -45,7 +45,7 @@ def show_product_by_category(category_id: int) -> InlineKeyboardMarkup:
     builder.adjust(2)
     builder.row(
         InlineKeyboardButton(
-            text="👈 Вернуться назад",
+            text="👈 Back",
             callback_data="back_to_categories",
         )
     )
@@ -59,13 +59,13 @@ def add_to_cart(quantity=1) -> InlineKeyboardMarkup:
     builder.button(text="➕", callback_data="action+")
     builder.row(
         InlineKeyboardButton(
-            text="🛒 Добавить в корзину",
+            text="🛒 Add to cart",
             callback_data="put_into_cart",
         )
     )
     builder.row(
         InlineKeyboardButton(
-            text="👈 Назад",
+            text="👈 Back",
             callback_data="back_to_products",
         )
     )
@@ -78,7 +78,7 @@ def generate_basket_button(chat_id: int) -> InlineKeyboardMarkup:
     cart_product = db_get_product_for_delete(chat_id)
     builder.row(
         InlineKeyboardButton(
-            text="🚀 Оформить заказ",
+            text="🚀 Proceed to payment",
             callback_data="order_pay",
         ),
     )
@@ -100,7 +100,7 @@ def generate_basket_button(chat_id: int) -> InlineKeyboardMarkup:
         )
     builder.row(
         InlineKeyboardButton(
-            text="👈 Назад к покупкам",
+            text="👈 Back to shopping",
             callback_data="back_to_products",
         ),
     )
@@ -117,7 +117,7 @@ async def send_order_page(message_or_callback, tg_id: int, page: int):
     total_pages = (total_orders + ORDERS_PER_PAGE - 1) // ORDERS_PER_PAGE
 
     if not orders:
-        await message_or_callback.answer("У вас пока нет заказов.")
+        await message_or_callback.answer("You don't have any orders yet.")
         return
 
     text = format_order_history_text(orders)
@@ -125,15 +125,11 @@ async def send_order_page(message_or_callback, tg_id: int, page: int):
     buttons = []
     if page > 1:
         buttons.append(
-            InlineKeyboardButton(
-                text="⬅️ Назад", callback_data=f"orders_page:{page - 1}"
-            )
+            InlineKeyboardButton(text="⬅️ Back", callback_data=f"orders_page:{page - 1}")
         )
     if page < total_pages:
         buttons.append(
-            InlineKeyboardButton(
-                text="Вперёд ➡️", callback_data=f"orders_page:{page + 1}"
-            )
+            InlineKeyboardButton(text="Next ➡️", callback_data=f"orders_page:{page + 1}")
         )
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[buttons] if buttons else [])

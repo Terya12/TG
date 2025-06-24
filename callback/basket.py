@@ -1,5 +1,3 @@
-from itertools import product
-
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
 
@@ -12,7 +10,6 @@ from db.db_utils import (
     db_decrease_product_quantity,
     db_increase_product_quantity,
 )
-from handlers.users import show_main_menu
 from keyboards.inline_kb import (
     add_to_cart,
     generate_category_menu,
@@ -25,34 +22,34 @@ router = Router(name=__name__)
 
 @router.callback_query(F.data.startswith("action"))
 async def constructor_change(call: CallbackQuery):
-    # Получение названия продукта из caption
+    # Get product name from caption
     product_name = call.message.caption.split("\n")[0]
 
-    # Получение данных из БД
+    # Fetch data from DB
     user_cart = db_get_user_cart(call.message.chat.id)
     product = db_get_product_by_name(product_name)
 
     if not product or not user_cart:
-        await call.answer("Ошибка: товар не найден", show_alert=False)
+        await call.answer("Error: product not found", show_alert=False)
         return
 
-    action = call.data  # "action+" или "action-"
+    action = call.data  # "action+" or "action-"
     quantity = user_cart.total_product
 
     if action == "action+":
         quantity += 1
-        message_text = "✅ Продукт добавлен"
+        message_text = "✅ Product added"
     elif action == "action-":
         if quantity <= 1:
-            await call.answer("Меньше одного нельзя", show_alert=False)
+            await call.answer("Cannot be less than one", show_alert=False)
             return
         quantity -= 1
-        message_text = "🗑️ Продукт удалён"
+        message_text = "🗑️ Product removed"
     else:
-        await call.answer("Неизвестное действие", show_alert=False)
+        await call.answer("Unknown action", show_alert=False)
         return
 
-    # Обновление корзины
+    # Update cart
     total_price = product.price * quantity
     db_update_to_cart(
         price=total_price,
@@ -60,7 +57,7 @@ async def constructor_change(call: CallbackQuery):
         cart_id=user_cart.id,
     )
 
-    # Обновление сообщения
+    # Update message
     new_text = text_for_caption(
         name=product.product_name,
         desc=product.description,
@@ -71,7 +68,7 @@ async def constructor_change(call: CallbackQuery):
         reply_markup=add_to_cart(user_cart.total_product),
     )
 
-    # Уведомление пользователя
+    # Notify user
     await call.answer(
         message_text,
         show_alert=False,
@@ -87,7 +84,7 @@ async def quantity(call: CallbackQuery):
 
 @router.callback_query(F.data == "put_into_cart")
 async def put_into_cart(call: CallbackQuery):
-    # Добавление товаров в корзину
+    # Add products to cart
     product_name = call.message.caption.split("\n")[0]
     cart = db_get_user_cart(call.message.chat.id)
 
@@ -100,21 +97,21 @@ async def put_into_cart(call: CallbackQuery):
         total_price=cart.total_price,
     ):
         await call.message.answer(
-            "✅ Продукт добавлен в корзину",
+            "✅ Product added to cart",
             reply_markup=generate_category_menu(call.message.chat.id),
         )
     else:
         await call.message.answer(
-            "📝 Количество успешно обновлено",
+            "📝 Quantity successfully updated",
             reply_markup=generate_category_menu(call.message.chat.id),
         )
 
 
 @router.callback_query(F.data == "your_basket")
 async def show_basket(call: CallbackQuery):
-    """Показ корзины"""
+    """Display cart"""
     chat_id = call.message.chat.id
-    context = basket_text(chat_id, " 🧺 Ваша корзина")
+    context = basket_text(chat_id, " 🧺 Your cart")
     await call.message.delete()
     if context:
         count, text, *_ = context
@@ -124,7 +121,7 @@ async def show_basket(call: CallbackQuery):
         )
     else:
         await call.message.answer(
-            text="Ваша корзина пуста 😔",
+            text="Your cart is empty 😔",
             reply_markup=generate_category_menu(chat_id),
         )
 
@@ -135,7 +132,7 @@ async def delete_cart_product(call: CallbackQuery):
     db_delete_product_by_id(finally_id)
     chat_id = call.message.chat.id
 
-    await call.answer("🗑️ Продукт удалён")
+    await call.answer("🗑️ Product removed")
     await show_basket(call)
 
 
@@ -145,27 +142,27 @@ async def increase_quantity(callback: CallbackQuery):
     chat_id = callback.from_user.id
     db_increase_product_quantity(chat_id, product_id)
 
-    context = basket_text(chat_id, " 🧺 Ваша корзина")
+    context = basket_text(chat_id, " 🧺 Your cart")
     if context:
         count, text, *_ = context
 
         if count == 0:
-            # Если корзина пуста, меняем текст и клавиатуру на пустую корзину
+            # If cart is empty, show empty cart message and menu
             await callback.message.edit_text(
-                text="Ваша корзина пуста 😔",
+                text="Your cart is empty 😔",
                 reply_markup=generate_category_menu(chat_id),
             )
         else:
-            # Обновляем и текст, и клавиатуру в одном вызове
-            await callback.answer(text="✅ Продукт добавлен")
+            # Update both text and keyboard
+            await callback.answer(text="✅ Product added")
             await callback.message.edit_text(
                 text=text,
                 reply_markup=generate_basket_button(chat_id),
             )
     else:
-        # Если вдруг context пустой, тоже показываем пустую корзину
+        # If context is unexpectedly empty, show empty cart
         await callback.message.edit_text(
-            text="Ваша корзина пуста 😔",
+            text="Your cart is empty 😔",
             reply_markup=generate_category_menu(chat_id),
         )
 
@@ -179,27 +176,27 @@ async def decrease_quantity(callback: CallbackQuery):
 
     db_decrease_product_quantity(chat_id, product_id)
 
-    context = basket_text(chat_id, " 🧺 Ваша корзина")
+    context = basket_text(chat_id, " 🧺 Your cart")
     if context:
         count, text, *_ = context
 
         if count == 0:
-            # Если корзина пуста, меняем текст и клавиатуру на пустую корзину
+            # If cart is empty, show empty cart message and menu
             await callback.message.edit_text(
-                text="Ваша корзина пуста 😔",
+                text="Your cart is empty 😔",
                 reply_markup=generate_category_menu(chat_id),
             )
         else:
-            # Обновляем и текст, и клавиатуру в одном вызове
-            await callback.answer(text="🗑️ Продукт удалён")
+            # Update both text and keyboard
+            await callback.answer(text="🗑️ Product removed")
             await callback.message.edit_text(
                 text=text,
                 reply_markup=generate_basket_button(chat_id),
             )
     else:
-        # Если вдруг context пустой, тоже показываем пустую корзину
+        # If context is unexpectedly empty, show empty cart
         await callback.message.edit_text(
-            text="Ваша корзина пуста 😔",
+            text="Your cart is empty 😔",
             reply_markup=generate_category_menu(chat_id),
         )
 
@@ -208,4 +205,4 @@ async def decrease_quantity(callback: CallbackQuery):
 
 @router.callback_query(lambda c: c.data == "noop")
 async def noop_callback(callback: CallbackQuery):
-    await callback.answer()  # просто игнорирует, ничего не делает
+    await callback.answer()  # just ignore, do nothing

@@ -16,8 +16,8 @@ router = Router(name=__name__)
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     await message.answer(
-        f"Здравствуйте, <b>{message.from_user.full_name}</b>! \n"
-        f"Вас приветствует бот по заказу еды."
+        f"Hello, <b>{message.from_user.full_name}</b>! \n"
+        f"Welcome to the food ordering bot."
     )
     await start_register_user(message)
 
@@ -29,36 +29,36 @@ async def start_register_user(message: Message) -> None:
 
     if not user:
         if db_register_user(chat_id, full_name):
-            await message.answer("Вы успешно зарегистрированы.")
+            await message.answer("You have successfully registered.")
         else:
-            await message.answer("Произошла ошибка при регистрации.")
-        user = db_get_user_by_telegram(chat_id)  # обновляем после регистрации
+            await message.answer("An error occurred during registration.")
+        user = db_get_user_by_telegram(chat_id)  # refresh after registration
 
     if user.phone:
         await message.answer(
-            "Приветствуем в нашем магазине вкусной еды! 🥙",
+            "Welcome to our delicious food shop! 🥙",
             reply_markup=generate_main_menu(),
         )
     else:
         await message.answer(
-            text="Для связи с Вами нам нужен Ваш контактный номер ☎️",
+            text="We need your contact number to reach you ☎️",
             reply_markup=share_phone_button(),
         )
 
 
 @router.message(F.contact)
 async def contact_handler(message: Message) -> None:
-    # Обновление контакта
+    # Update user's contact
     chat_id = message.chat.id
     phone = message.contact.phone_number
     db_update_user(chat_id, phone)
     if db_create_user_cart(chat_id):
         await message.answer(
-            text="Регистрация прошла успешно",
+            text="Registration completed successfully",
             reply_markup=generate_main_menu(),
         )
 
 
 async def show_main_menu(message: Message) -> None:
-    # Сделать заказ, История, Корзинка, Настройки
-    await message.answer(text="Выберите вариант", reply_markup=generate_main_menu())
+    # Make order, History, Basket, Settings
+    await message.answer(text="Choose an option", reply_markup=generate_main_menu())

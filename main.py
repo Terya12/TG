@@ -35,9 +35,9 @@ TOKEN = settings.token
 dp = Dispatcher()
 
 dp.include_routers(
-    filters_router,
     handlers_router,
     callback_router,
+    filters_router,
 )
 
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))

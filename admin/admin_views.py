@@ -3,13 +3,23 @@ from db.models import Users, Cart, Finally_carts, Categories, Products, Order, O
 
 
 class UserAdmin(ModelView, model=Users):
-    column_list = [Users.id, Users.name, Users.telegram, Users.phone]
+    column_list = [
+        Users.id,
+        Users.name,
+        Users.telegram,
+        Users.phone,
+    ]
     name = "User"
     name_plural = "Users"
 
 
 class CartAdmin(ModelView, model=Cart):
-    column_list = [Cart.id, Cart.total_price, Cart.total_product, Cart.user_id]
+    column_list = [
+        Cart.id,
+        Cart.total_price,
+        Cart.total_product,
+        Cart.user_id,
+    ]
     name = "Cart"
     name_plural = "Carts"
 
@@ -27,7 +37,10 @@ class FinallyCartAdmin(ModelView, model=Finally_carts):
 
 
 class CategoryAdmin(ModelView, model=Categories):
-    column_list = [Categories.id, Categories.category_name]
+    column_list = [
+        Categories.id,
+        Categories.category_name,
+    ]
     name = "Category"
     name_plural = "Categories"
 

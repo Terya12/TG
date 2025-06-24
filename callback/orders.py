@@ -1,7 +1,6 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, FSInputFile
 
-
 from db.db_utils import (
     db_get_product_by_id,
     db_get_user_cart,
@@ -21,11 +20,10 @@ router = Router(name=__name__)
 
 @router.callback_query(F.data.startswith("category_"))
 async def show_product_button(call: CallbackQuery):
-    # Показ всех продуктов выбраной категории
+    # Display all products from the selected category
     category_id = int(call.data.split("_")[1])
-    # message_id = call.message.message_id
     await call.message.edit_text(
-        text="Выберите продукт",
+        text="Choose a product",
         reply_markup=show_product_by_category(
             category_id,
         ),
@@ -33,17 +31,17 @@ async def show_product_button(call: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith("back_to_categories"))
-# Возврат к выбору категории
+# Return to category selection
 async def back_to_categories(call: CallbackQuery):
     await call.message.edit_text(
-        text="Выберите продукт",
+        text="Choose a product",
         reply_markup=generate_category_menu(call.message.chat.id),
     )
 
 
 @router.callback_query(F.data.startswith("product_"))
 async def show_detail_product(call: CallbackQuery):
-    # Показ продукта
+    # Display product details
     chat_id = call.message.chat.id
     product_id = int(call.data.split("_")[1])
     product = db_get_product_by_id(product_id)
@@ -65,7 +63,7 @@ async def show_detail_product(call: CallbackQuery):
         )
     else:
         await call.message.answer(
-            text="Нам нужен ваш контакт для связи",
+            text="We need your contact information",
             reply_markup=share_phone_button(),
         )
 
@@ -74,7 +72,7 @@ async def show_detail_product(call: CallbackQuery):
 async def back_to_products(call: CallbackQuery):
     await call.message.delete()
     await call.message.answer(
-        text="Выберите продукт",
+        text="Choose a product",
         reply_markup=generate_category_menu(call.message.chat.id),
     )
 

@@ -16,9 +16,9 @@ router = Router()
 
 @router.pre_checkout_query()
 async def process_pre_checkout(pre_checkout_q: PreCheckoutQuery, bot: Bot):
-    # Здесь можно проверить payload, например:
+    # Here you can validate the payload
     if not pre_checkout_q.invoice_payload.startswith("order_"):
-        await pre_checkout_q.answer(ok=False, error_message="Некорректный заказ.")
+        await pre_checkout_q.answer(ok=False, error_message="Invalid order.")
         return
 
     await pre_checkout_q.answer(ok=True)
@@ -28,19 +28,26 @@ async def process_pre_checkout(pre_checkout_q: PreCheckoutQuery, bot: Bot):
 async def show_detail_payment(call: CallbackQuery):
     count, text, total_price, cart_id = basket_text(
         call.message.chat.id,
-        "Итоговый список для оплаты",
+        "Final order summary for payment",
     )
-    text += "\n Доставка по городу 100грн"
+    delivery_cost = 5  # например 50 грн
+    text += f"\nDelivery within the city: ${delivery_cost}"
+
     await call.message.delete()
+
+    # Отправляем полный текст отдельным сообщением (чтобы переносы сохранились)
+    await call.message.answer(text)
+
+    # Отправляем инвойс с кратким описанием (без переносов)
     await call.message.answer_invoice(
-        title="Оплата заказа",
-        description=text,
+        title="Order payment",
+        description="Please confirm your order and pay.",
         payload=f"order_{cart_id}_{call.from_user.id}",
         provider_token=settings.payment,
-        currency=Currency.UAH,
+        currency="UAH",
         prices=[
-            LabeledPrice(label="Товаров на сумму", amount=int(total_price * 100)),
-            LabeledPrice(label="Стоимость доставки", amount=int(100 * 100)),
+            LabeledPrice(label="Total for products", amount=int(total_price * 100)),
+            LabeledPrice(label="Delivery cost", amount=int(delivery_cost * 100)),
         ],
         start_parameter="time-to-pay",
     )
@@ -52,44 +59,46 @@ async def process_successful_payment(message: Message, bot: Bot):
     payload = payment.invoice_payload
 
     try:
-        # Разбор payload — ожидаем "order_<basket_id>_<user_id>"
+        # Parse payload — expected format: "order_<basket_id>_<user_id>"
         parts = payload.split("_")
         if len(parts) != 3 or parts[0] != "order":
-            raise ValueError("Неверный формат payload")
+            raise ValueError("Invalid payload format")
 
         cart_id = int(parts[1])
         user_id = int(parts[2])
 
         user = db_get_user_by_tg_id(user_id)
         if not user:
-            raise ValueError(f"Пользователь с ID {user_id} не найден")
+            raise ValueError(f"User with ID {user_id} not found")
 
-        # Получаем корзину и считаем итоговую сумму
+        # Get cart and calculate total
         count, text, total_price, cart_id = basket_text(
             message.chat.id,
             "",
         )
 
-        # Сохраняем заказ и получаем order_id
+        # Save the order and get the order ID
         order_id = db_save_order(user.id, total_price, cart_id)
 
         await bot.send_message(
             chat_id=settings.work_group,
             text=(
-                f"✅ Получен новый заказ!\n"
-                f"Пользователь: {user.name}\n"
-                f"Телефон: {user.phone}\n"
-                f"Заказ № {order_id}"
+                f"✅ New order received!\n"
+                f"User: {user.name}\n"
+                f"Phone: {user.phone}\n"
+                f"Order № {order_id}"
                 f"{text}"
             ),
         )
 
         db_clear_basket(cart_id)
 
-        await message.answer("Спасибо за оплату! Ваш заказ подтверждён ✅")
+        await message.answer(
+            "Thank you for your payment! Your order has been confirmed ✅"
+        )
 
     except Exception as e:
-        print(f"[Ошибка оплаты] {e}")
+        print(f"[Payment error] {e}")
         await message.answer(
-            "Произошла ошибка при обработке платежа. Мы уже разбираемся."
+            "An error occurred while processing the payment. We’re already looking into it."
         )
